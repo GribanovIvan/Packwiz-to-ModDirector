@@ -17,11 +17,14 @@ int main(int argc, char* argv[]) {
 										std::cout << "Found non-toml file: " << entry.path().filename() << " Ignoring..." << std::endl;
 								}
 								else {
-										// std::cout << entry.path() << std::endl;
+#ifdef DEBUG
+										std::cerr << entry.path().filename() << std::endl;
+#endif
 										std::ifstream file(entry.path());
 										std::string line;
 										char side=BOTH;
-										while(std::getline(file, line)) {
+										while(true)
+										if(std::getline(file, line)) {
 												size_t pos = line.find("side");
 												if (pos != std::string::npos) {
 														line=line.substr(line.find("=")+1);
@@ -33,6 +36,12 @@ int main(int argc, char* argv[]) {
 														break;
 												}
 											}
+										else {
+												std::cerr<<"Side not found, assuming \"both\": "<<entry.path().filename()<<std::endl;
+												file.clear();
+												file.seekg(0);
+												break;
+										}
 										while(std::getline(file,line)){
 											if (line.substr(0,3)=="url")
 												{
@@ -50,12 +59,14 @@ int main(int argc, char* argv[]) {
 											curse.push_back(side);
 											break;
 											}
+										if(!line.size()) std::cerr<<"No url or curseforge section found in file: "<<entry.path().filename()<<" - skipping" <<std::endl;
+										file.close();
 								}
         }
 std::cout<<"{\n\t\"curse\":\n\t[";
 unsigned short count = 0;
 while (count<curse.size()/3){
-	std::cout<<"\n\t\t{\n\t\t\t\"addonId\": "<<curse[count*3]<<",\n\t\t\t\"fileid\": ";std::cout<<curse[count*3+1];
+	std::cout<<"\n\t\t{\n\t\t\t\"addonId\": "<<curse[count*3+1]<<",\n\t\t\t\"fileId\": "<<curse[count*3];
 		if (curse[count*3+2] != BOTH) std::cout<<",\n\t\t\t\"metadata\": {\n\t\t\t\t\"side\": \""<<(curse[count*3+2]==CLIENT?"CLIENT":(curse[count*3+2]==SERVER?"SERVER":"BOTH"))<<"\"\n\t\t\t}";
 	std::cout<<"\n\t\t}";
 		if (count<curse.size()/3-1) std::cout<<",";
